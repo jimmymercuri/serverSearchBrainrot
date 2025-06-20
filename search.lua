@@ -1,4 +1,20 @@
+-- Check if we rejoined the same JobId (to avoid duplicates)
+local tpData = game:GetService("Players").LocalPlayer:FindFirstChild("TeleportData")
+if tpData and tpData:IsA("StringValue") then
+    local data = tpData.Value
+    local success, decoded = pcall(function()
+        return game:GetService("HttpService"):JSONDecode(data)
+    end)
+    if success and decoded and decoded.lastJobId == game.JobId then
+        warn("🔁 Rejoined same server accidentally. Hopping again...")
+        game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
+        return
+    end
+end
+
+
 -- CONFIGURATION
+
 local brainrots = {
     "Graipuss Medussi",
     "Odin Din Din Dun",
@@ -116,11 +132,14 @@ local function checkForBrainrots()
 end
 
 -- SERVER HOP FUNCTION (no HTTP needed)
+-- SERVER HOP FUNCTION WITH JOB ID TRACKING
 local function serverHop()
     local TeleportService = game:GetService("TeleportService")
     local LocalPlayer = game.Players.LocalPlayer
-    print("🔁 Hopping to new server...")
-    TeleportService:Teleport(game.PlaceId, LocalPlayer)
+    local currentJobId = game.JobId
+
+    print("🔁 Hopping to new server... (Avoiding JobId: " .. currentJobId .. ")")
+    TeleportService:Teleport(game.PlaceId, LocalPlayer, { lastJobId = currentJobId })
 end
 
 -- MAIN LOOP
